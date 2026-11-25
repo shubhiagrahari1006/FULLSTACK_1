@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Management System | Academic Registrar Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">SM</div>
+          <div>
+            <h1 class="brand-title">Student Management System</h1>
+            <p class="brand-subtitle">Office of Academic Records &amp; Enrollment</p>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <span id="dbStatusBadge" class="status-pill status-pill--neutral" aria-live="polite">
+            Checking database...
+          </span>
+          <button id="openCreateModalBtn" class="btn btn-primary" type="button">
+            + Register Student
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container main-content">
+      <section class="kpi-grid" aria-label="Enrollment Summary">
+        <article class="kpi-card">
+          <span class="kpi-label">Total Enrolled</span>
+          <strong id="kpiTotal" class="kpi-value">0</strong>
+          <span class="kpi-note">Registered student records</span>
+        </article>
+        <article class="kpi-card">
+          <span class="kpi-label">Active Students</span>
+          <strong id="kpiActive" class="kpi-value">0</strong>
+          <span class="kpi-note">Currently attending semester</span>
+        </article>
+        <article class="kpi-card">
+          <span class="kpi-label">Average CGPA</span>
+          <strong id="kpiAvgCgpa" class="kpi-value">0.00</strong>
+          <span class="kpi-note">On a 10.00 grading scale</span>
+        </article>
+        <article class="kpi-card">
+          <span class="kpi-label">Departments</span>
+          <strong id="kpiDepartments" class="kpi-value">0</strong>
+          <span class="kpi-note">Represented academic faculties</span>
+        </article>
+      </section>
+
+      <section class="panel" aria-label="Student Directory">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Student Directory</h2>
+            <p class="panel-description">
+              Search, filter, update, and maintain official student academic records.
+            </p>
+          </div>
+          <span id="recordCountLabel" class="record-count">0 records</span>
+        </div>
+
+        <div class="toolbar">
+          <div class="search-field">
+            <label for="searchInput" class="sr-only">Search students</label>
+            <input
+              id="searchInput"
+              type="search"
+              placeholder="Search by roll number, full name, or email..."
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="filter-group">
+            <label for="departmentFilter" class="sr-only">Filter by department</label>
+            <select id="departmentFilter">
+              <option value="">All Departments</option>
+              <option value="Computer Science">Computer Science</option>
+              <option value="Information Technology">Information Technology</option>
+              <option value="Electronics & Communication">Electronics &amp; Communication</option>
+              <option value="Mechanical Engineering">Mechanical Engineering</option>
+              <option value="Civil Engineering">Civil Engineering</option>
+              <option value="Business Administration">Business Administration</option>
+            </select>
+
+            <label for="statusFilter" class="sr-only">Filter by status</label>
+            <select id="statusFilter">
+              <option value="">All Statuses</option>
+              <option value="Active">Active</option>
+              <option value="On Leave">On Leave</option>
+              <option value="Graduated">Graduated</option>
+            </select>
+
+            <label for="sortSelect" class="sr-only">Sort records</label>
+            <select id="sortSelect">
+              <option value="newest">Sort: Recently Added</option>
+              <option value="roll_asc">Sort: Roll Number (A-Z)</option>
+              <option value="name_asc">Sort: Name (A-Z)</option>
+              <option value="cgpa_desc">Sort: Highest CGPA</option>
+            </select>
+
+            <button id="resetFiltersBtn" class="btn btn-secondary" type="button">Reset</button>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Roll Number</th>
+                <th>Student</th>
+                <th>Department</th>
+                <th>Semester</th>
+                <th>CGPA</th>
+                <th>Contact</th>
+                <th>Status</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="studentTableBody"></tbody>
+          </table>
+
+          <div id="emptyState" class="empty-state" hidden>
+            <p class="empty-title">No matching student records found</p>
+            <p class="empty-subtitle">
+              Adjust your search filters or register a new student to populate the directory.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Add / Edit Student Modal -->
+    <div id="studentModal" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <h2 id="modalTitle" class="modal-title">Register New Student</h2>
+            <p class="modal-subtitle">Enter official academic and contact details.</p>
+          </div>
+          <button id="closeModalBtn" class="icon-btn" type="button" aria-label="Close modal">
+            &times;
+          </button>
+        </div>
+
+        <form id="studentForm" novalidate>
+          <input type="hidden" id="studentId" />
+
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="rollNumber">Roll Number <span class="required">*</span></label>
+              <input id="rollNumber" name="rollNumber" type="text" placeholder="e.g. CS-2026-015" required />
+            </div>
+
+            <div class="form-field">
+              <label for="fullName">Full Name <span class="required">*</span></label>
+              <input id="fullName" name="fullName" type="text" placeholder="e.g. Priya Sharma" required />
+            </div>
+
+            <div class="form-field">
+              <label for="email">Institutional Email <span class="required">*</span></label>
+              <input id="email" name="email" type="email" placeholder="name@university.edu" required />
+            </div>
+
+            <div class="form-field">
+              <label for="phone">Contact Number <span class="required">*</span></label>
+              <input id="phone" name="phone" type="tel" placeholder="+91 98201 00000" required />
+            </div>
+
+            <div class="form-field">
+              <label for="department">Department <span class="required">*</span></label>
+              <select id="department" name="department" required>
+                <option value="">Select department</option>
+                <option value="Computer Science">Computer Science</option>
+                <option value="Information Technology">Information Technology</option>
+                <option value="Electronics & Communication">Electronics &amp; Communication</option>
+                <option value="Mechanical Engineering">Mechanical Engineering</option>
+                <option value="Civil Engineering">Civil Engineering</option>
+                <option value="Business Administration">Business Administration</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label for="semester">Semester (1-8) <span class="required">*</span></label>
+              <input id="semester" name="semester" type="number" min="1" max="8" step="1" value="1" required />
+            </div>
+
+            <div class="form-field">
+              <label for="cgpa">CGPA (0.00 - 10.00) <span class="required">*</span></label>
+              <input id="cgpa" name="cgpa" type="number" min="0" max="10" step="0.01" placeholder="8.50" required />
+            </div>
+
+            <div class="form-field">
+              <label for="status">Academic Status</label>
+              <select id="status" name="status">
+                <option value="Active">Active</option>
+                <option value="On Leave">On Leave</option>
+                <option value="Graduated">Graduated</option>
+              </select>
+            </div>
+
+            <div class="form-field form-field--full">
+              <label for="enrollmentDate">Enrollment Date</label>
+              <input id="enrollmentDate" name="enrollmentDate" type="date" />
+            </div>
+          </div>
+
+          <p id="formErrorBanner" class="form-error" hidden role="alert"></p>
+
+          <div class="modal-footer">
+            <button id="cancelModalBtn" class="btn btn-secondary" type="button">Cancel</button>
+            <button id="submitStudentBtn" class="btn btn-primary" type="submit">Save Record</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+      <div class="modal-card modal-card--compact">
+        <div class="modal-header">
+          <h2 id="deleteModalTitle" class="modal-title">Confirm Record Removal</h2>
+        </div>
+        <p id="deleteModalMessage" class="delete-copy">
+          Are you sure you want to permanently remove this student record?
+        </p>
+        <div class="modal-footer">
+          <button id="cancelDeleteBtn" class="btn btn-secondary" type="button">Cancel</button>
+          <button id="confirmDeleteBtn" class="btn btn-danger" type="button">Delete Record</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
